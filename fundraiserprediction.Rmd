@@ -1,0 +1,233 @@
+---
+title: "data_preprocessing_survivalanalysis"
+author: "Hope Machira"
+date: "December 18, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+##reading the dataset
+```{r}
+obituaries<- read.csv(file ="obituaries_dataset.csv")
+```
+
+##loading necessary packages
+```{r}
+library(psych)
+library(caret)
+library(psych)
+library(naniar)
+library(tidyverse)
+library(visdat)
+library(UpSetR)
+library(VIM)
+library(ggplot2)
+library(ggpubr)
+library(plotROC)
+
+```
+
+##viewing the dataset
+```{r}
+str(obituaries)
+summary(obituaries)
+
+
+```
+
+
+##setting to null some columns to remove
+```{r}
+obituaries$Name<-NULL
+obituaries$Announcement<-NULL
+obituaries$Death<-NULL
+obituaries$Burial<-NULL
+obituaries $Same_Morgue<-NULL
+obituaries$Repetition<-NULL
+obituaries$Corporate<-NULL
+obituaries$Corporate_Name<-NULL
+obituaries$Residence<-NULL
+obituaries$Residence_Category<-NULL
+obituaries$Residence_Name<-NULL
+obituaries$County_Burial<-NULL
+obituaries$County_Death<-NULL
+obituaries$County_Morgue<-NULL
+obituaries$Word_Count<-NULL
+obituaries$Morgue<-NULL
+obituaries$Hospital<-NULL
+obituaries$Distance_Death<-NULL
+obituaries$Distance_Morgue<-NULL
+obituaries$No_of_Relatives<-NULL
+obituaries$Occupation<-NULL
+
+```
+
+##transforming variable types and cleansing
+```{r}
+
+str(obituaries)
+names(obituaries)
+# obituaries$Death<- as.Date(obituaries$Death, format="%d/%m/%Y")
+# obituaries$Announcement<- as.Date(obituaries$Announcement, format="%d/%m/%Y")
+# obituaries$Burial<- as.Date(obituaries$Burial, format="%d/%m/%Y")
+obituaries$No_of_Children<-as.numeric(obituaries$No_of_Children)
+obituaries$Significant_Children<-as.numeric(obituaries$Significant_Children)
+obituaries$Fundraising<-as.numeric(obituaries$Fundraising)
+obituaries$Significant_Children<-as.numeric(obituaries$Significant_Children)
+obituaries$Significant_Relatives<-as.numeric(obituaries$Significant_Relatives)
+#bituaries$Distance_Death<-as.numeric(obituaries$Distance_Death)
+#bituaries$Distance_Morgue<-as.numeric(obituaries$Distance_Morgue)
+obituaries$Death_to_Announce<-as.numeric(obituaries$Death_to_Burial)
+obituaries$Death_to_Burial<-as.numeric(obituaries$Death_to_Burial)
+obituaries$Announce_to_Burial<-as.numeric(obituaries$Announce_to_Burial)
+#bituaries$No_of_Relatives<-as.numeric(obituaries$No_of_Relatives)
+obituaries$Age<-as.numeric(obituaries$Age)
+obituaries$Cause_of_Death[obituaries$Cause_of_Death=="ilness"] <- "illness"
+obituaries$Cause_of_Death[obituaries$Cause_of_Death=="lllness"] <- "illness"
+obituaries$Cause_of_Death[obituaries$Cause_of_Death=="accident"] <- "Accident"
+obituaries$Cause_of_Death[obituaries$Cause_of_Death=="road accident"] <- "Accident"
+obituaries$Cause_of_Death[obituaries$Cause_of_Death=="fire accident"] <- "Accident"
+obituaries$Married[obituaries$Married=="no"]<-"No"
+levels(obituaries$Burial_Week)[levels(obituaries$Burial_Week)=="Weekend"]<-"weekend" 
+levels(obituaries$Burial_Week)
+levels(obituaries$Spouse_Alive)[levels(obituaries$Spouse_Alive)=="Weekend"]<-"weekend" 
+levels(obituaries$Spouse_Alive)
+levels(obituaries$Married)
+str(obituaries)
+obituaries<- obituaries[,c(1,2,3,4,13,14,15,16,17,5,6,7,8,9,11,12,18,10)]
+                          
+names(obituaries)
+
+```
+
+##binning
+```{r}
+# set up boundaries for intervals/bins
+breaks <- c(1,5,20,40,60,80,100,120)
+# specify interval/bin labels
+labels <- c("<1", "5-20)", "20-40)", "40-60)", "60-80)", "80-100)", ">=100")
+# bucketing data points into bins
+bins <- cut(obituaries$Age, breaks, include.lowest = T, right=FALSE, labels=labels)
+# inspect bins
+summary(bins)
+plot(bins, main="Frequency", ylab="Number of People",col="bisque")
+```
+
+
+
+## visualizing missing variables
+```{r}
+
+obituaries_num<-obituaries[,1:9]
+pct_miss(obituaries_num)
+n_miss(obituaries_num$Age)
+n_complete(obituaries_num$Age)
+pct_complete(obituaries_num)
+miss_var_summary(obituaries_num)
+
+obituaries_num %>%
+  as_shadow_upset() %>%
+  upset()
+
+
+aggr(obituaries_num, numbers = TRUE, prop = c(TRUE, FALSE))
+```
+
+
+
+
+```{r}
+# names(obituaries_ext)
+# y_train<-obituaries_ext[,c(34)]
+```
+
+## dealing with missing variables
+```{r}
+library(DMwR)
+obituaries_ext_imp <- centralImputation(obituaries_ext)
+summary(obituaries_ext_imp)
+
+# names(obituaries_ext)
+
+```   
+
+
+##dealing with dummy variables
+```{r}
+names(obituaries)
+dmy <- dummyVars(~ Gender+ Color + Cause_of_Death  + Married + Spouse_Alive + Spouse_gender+ Cost_Morgue + Fundraising +Burial_Day+Burial_Week , data = obituaries)
+trsf <- data.frame(predict(dmy, newdata = obituaries))
+print(trsf)
+names(trsf)
+obituaries_ext<- cbind(trsf, obituaries_num)
+##obituaries_cat<- obituaries[,c(1:9)]
+obituaries_num<- obituaries[,c(4,5,11:16,18)]
+##complete dataset-obituaries_ext
+# names(obituaries_ext)
+# names(obituaries_cat)
+# names(obituaries_num)
+names(obituaries)
+str(obituaries)
+# fundraising_code<- dummy.code(obituaries$Fundraising)
+# extended_ext<-cbind(obituaries$ext, fundraising_code)
+# 
+str(obituaries)
+```
+
+##checking correlation
+```{r}
+# cor(obituaries_num)
+```
+
+##visualizatons
+```{r}
+
+theme_set(theme_pubr())
+
+ggplot(obituaries, aes(Cause_of_Death)) +
+  geom_bar(fill = "#0073C2FF") +
+  theme_pubclean()
+
+ggplot(obituaries, aes(Cause_of_Death)) +
+  geom_bar(fill = "#0073C2FF") +
+  theme_pubclean()
+
+attach(obituaries)
+plot(Age, Fundraising, main="Scatterplot Example", 
+   xlab="Car Weight ", ylab="Miles Per Gallon ")
+```
+
+##split into train and test
+```{r}
+set.seed(123)
+n <- nrow(obituaries_ext)
+shuffled <- obituaries_ext[sample(n),]
+train <- shuffled[1:round(0.7 * n),]
+test <- shuffled[(round(0.7 * n) + 1):n,]
+
+```
+
+```{r}
+fundraising_model<-glm(Fundraising ~., family =binomial(link="logit"), data=train)
+```
+
+
+```{r}
+predicted<- predict(fundraising_model, test, type="response")
+
+```
+##testing the model
+```{r}
+plotRoc(test$Fundraising, precicted)
+confusionMatrix(test$Fundraising, predicted, threshhold="optCutOff")
+
+sensitivity(test$Fundraising, predicted, threshhold ="optCutOff")
+specificity(test$Fundraising, precicted, threshhold="optCutOff")
+```
+
+```{r}
+write.csv(obituaries_ext, file="fundraising.csv")
+```
+

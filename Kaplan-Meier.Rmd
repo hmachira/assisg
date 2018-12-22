@@ -1,0 +1,34 @@
+---
+title: "Kaplan-meier"
+author: "Hope Machira"
+date: "December 22, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+mydata<-read.csv(file="fundraising.csv")
+```
+
+```{r}
+library(survival)
+library(survminer)
+str(mydata)
+```
+
+```{r}
+fr <- survfit(Surv(Death_to_Burial, Fundraising) ~ 1, data = mydata)
+
+# plot of the Kaplan-Meier estimate
+ggsurvplot(fr)
+
+# add the risk table to plot
+ggsurvplot(fr, risk.table = TRUE)
+
+# add a line showing the median survival time
+ggsurvplot(fr, risk.table = TRUE, surv.median.line = "hv")
+```
+
